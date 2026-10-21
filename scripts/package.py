@@ -14,6 +14,7 @@ files = ["Core.lua", "Tracker.lua", "Panel.lua", "pfQuest-partybots.toc", "READM
 with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
     for name in files:
         info = zipfile.ZipInfo("pfQuest-partybots/" + name, date_time=(2026, 10, 21, 0, 0, 0))
+        info.create_system = 3
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
         archive.writestr(info, (addon / name).read_bytes())
