@@ -17,6 +17,10 @@ not replaced. This extension requires the matching Playerbot server changes.
   also show bot progress only after clicking their title. The `Party quests`
   button opens the full comparison.
 - Hover a quest to see each bot's state and collected/required objective counts.
+  Party quest popups also show pfQuest's localized objective instructions for
+  that exact quest ID, so quests absent from your journal still explain the
+  current task. Chain stages are distinct quests; no stage number is guessed.
+  If pfQuest lacks the text, the popup says so and retains server progress.
 - `Ready` means the bot's native quest status is complete but unrewarded.
   `Turned in` means the server records a previous reward and the quest is not
   currently in that bot's log. A repeatable quest accepted again shows its active

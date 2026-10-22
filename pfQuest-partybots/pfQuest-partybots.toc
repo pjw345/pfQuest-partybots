@@ -2,7 +2,7 @@
 ## Title: pfQuest Party Bots
 ## Notes: Live Playerbot quest progress in the pfQuest tracker and party comparison.
 ## Author: pjw345
-## Version: 1.0.3
+## Version: 1.0.4
 ## X-Website: https://github.com/pjw345/pfQuest-partybots
 ## X-License: MIT
 ## Dependencies: pfQuest

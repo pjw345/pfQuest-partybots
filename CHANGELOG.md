@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.4 - 2026-10-22 (preview)
+
+- Show localized quest objective instructions above bot progress in party quest
+  popups, both under the tracker and in the full comparison.
+- Use the exact quest ID for the current chain stage, preserving per-bot counts
+  and ready/stale states even when local instruction text is unavailable.
+- Client-only change; no server rebuild required.
+
 ## 1.0.3 - 2026-10-22 (preview)
 
 - Include every party journal quest missing from pfQuest's visible tracker rows,
