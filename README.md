@@ -8,7 +8,8 @@ Requires pfQuest and the matching Playerbot server support from
 [pjw345/tortoise-wow PR #61](https://github.com/pjw345/tortoise-wow/pull/61).
 The AddOn alone cannot obtain bot quest state on an unmodified server.
 
-**1.0.1 compatibility:** requires the server's colon-delimited request support.
+**1.0.1 compatibility:** requires [server PR #64](https://github.com/pjw345/tortoise-wow/pull/64),
+which adds colon-delimited request support.
 The original server build `2151c15b` rejects these requests; the corresponding
 transport fix must be built and activated before live quest data can appear.
 1.0.0 used bare pipe separators, which the 1.12 client rejects before sending.

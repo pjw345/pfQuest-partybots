@@ -38,7 +38,7 @@ The matching server implementation is maintained separately in
 [pjw345/tortoise-wow PR #61](https://github.com/pjw345/tortoise-wow/pull/61).
 Requires WoW 1.12.1 (Interface 11200), pfQuest, and `PFQBOT` protocol version 1.
 Tracker integration has been checked against pfQuest 8.0.1; pfQuest-turtle is optional.
-Version 1.0.1 also requires the colon-delimited request transport fix.
+Version 1.0.1 also requires the [transport fix in server PR #64](https://github.com/pjw345/tortoise-wow/pull/64).
 The initial server implementation `591c68d4` / deployed stack `2151c15b` does not
 accept these corrected requests. Build and activate the matching server fix
 before testing live quest data; client installation alone removes the invalid
