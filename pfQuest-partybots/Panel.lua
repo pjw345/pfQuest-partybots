@@ -100,9 +100,7 @@ local function CreatePanel()
       cell:SetPoint("LEFT", row, "LEFT", 282 + (column - 1) * 100, 0); cell:SetWidth(98); cell:SetJustifyH("CENTER")
       row.cells[column] = cell
     end
-    row:SetScript("OnEnter", function()
-      GameTooltip:SetOwner(this, "ANCHOR_RIGHT"); GameTooltip:SetText(this.questTitle .. " (" .. this.questId .. ")"); P.AddTooltip(this.questId)
-    end)
+    row:SetScript("OnEnter", function() P.ShowQuestTooltip(this) end)
     row:SetScript("OnLeave", function() GameTooltip:Hide() end)
     panel.rows[i] = row
   end
