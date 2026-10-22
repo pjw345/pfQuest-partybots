@@ -1,14 +1,14 @@
 # pfQuest Party Bots
 
 A companion AddOn for WoW 1.12.1 that adds controlled Playerbots' quest progress
-to pfQuest: compact per-bot tracker rows, objective counts on hover, and a party
+to pfQuest: per-bot rows within expanded tracker quests, objective counts on hover, and a party
 quest comparison available from the tracker and Quest Log.
 
 Requires pfQuest and the matching Playerbot server support from
 [pjw345/tortoise-wow PR #61](https://github.com/pjw345/tortoise-wow/pull/61).
 The AddOn alone cannot obtain bot quest state on an unmodified server.
 
-**1.0.1 compatibility:** requires [server PR #64](https://github.com/pjw345/tortoise-wow/pull/64),
+**1.0.1 and later compatibility:** requires [server PR #64](https://github.com/pjw345/tortoise-wow/pull/64),
 which adds colon-delimited request support.
 The original server build `2151c15b` rejects these requests; the corresponding
 transport fix must be built and activated before live quest data can appear.
@@ -18,7 +18,7 @@ a separate acceptance check.
 
 ## Install
 
-Download `pfQuest-partybots-1.0.1.zip` from
+Download `pfQuest-partybots-1.0.2.zip` from
 [Releases](https://github.com/pjw345/pfQuest-partybots/releases), exit the game,
 and extract the contained `pfQuest-partybots` folder into `Interface/AddOns`,
 beside `pfQuest`. Restart the client and enable both AddOns. The folder containing
@@ -26,6 +26,10 @@ beside `pfQuest`. Restart the client and enable both AddOns. The folder containi
 
 For a source checkout, copy only the repository's `pfQuest-partybots` subfolder
 into `Interface/AddOns`; the GitHub source archive is not the packaged AddOn.
+
+Click a quest title to expand its personal objectives and bot progress; click
+again to hide the bot rows. Bot-only `[Party]` titles also expand on click.
+pfQuest's default expansion setting and ordinary click shortcuts are preserved.
 
 Use `/pfqb` to toggle the comparison and `/pfqb refresh` to request an update.
 See the [AddOn documentation](pfQuest-partybots/README.md) for display states,
@@ -57,6 +61,9 @@ python tests/test_client.py --wire native-wire.hex -v
 Optional `--lua50 /path/to/lua50` repeats the cases on Lua 5.0.3;
 `--pfquest-tracker /path/to/pfQuest/tracker.lua` loads the installed pfQuest's
 unmodified ButtonEvent and DoLayout implementations. No pfQuest source is bundled.
+The current suite also checks expansion/collapse and refreshes, native click
+shortcuts and bot-only footer rows. The optional pfQuest integration executes its
+unmodified ButtonClick, ButtonEvent and DoLayout together.
 CI runs the fixture suite on Lua 5.1 and does not claim live graphics or Lua 5.0 coverage.
 
 ## Package
@@ -65,7 +72,7 @@ CI runs the fixture suite on Lua 5.1 and does not claim live graphics or Lua 5.0
 python scripts/package.py
 ```
 
-This creates `dist/pfQuest-partybots-1.0.1.zip` with the correct install folder.
+This creates `dist/pfQuest-partybots-1.0.2.zip` with the correct install folder.
 
 ## License
 

@@ -1,5 +1,14 @@
 local P = pfQuestPartyBots
 local installed = false
+-- Mirror pfQuest's title-keyed expansion default without changing its source.
+-- Objective visibility alone is insufficient: pfQuest auto-shows partial progress.
+local expanded, partyExpanded = {}, {}
+local function Expanded(button)
+  if expanded[button.title] == nil then
+    expanded[button.title] = pfQuest_config["trackerexpand"] == "1"
+  end
+  return expanded[button.title]
+end
 local function Font() return (pfUI and pfUI.font_default) or STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF" end
 
 function P.ObjectiveLabel(objective)
@@ -63,7 +72,7 @@ local function Append(button)
   local tracker = pfQuest and pfQuest.tracker
   if not tracker or tracker.mode ~= "QUEST_TRACKING" or button.empty or not button.title or button:GetHeight() == 0 then return end
   local id = P.QuestId(button.questid, pfQuest.questlog and pfQuest.questlog[button.questid])
-  if not id then return end
+  if not id or not Expanded(button) then return end
   local base, size = button:GetHeight(), math.max(9, (tonumber(pfQuest_config.trackerfontsize) or 12) - 2)
   local lines = P.CompactLines(id)
   for index, text in ipairs(lines) do
@@ -110,15 +119,25 @@ local function UpdateFooter()
           GameTooltip:SetOwner(this, "ANCHOR_RIGHT"); GameTooltip:SetText(this.questTitle); P.AddTooltip(this.questId)
         end)
         row:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        row:SetScript("OnClick", function() if P.TogglePanel then P.TogglePanel() end end)
+        row:SetScript("OnClick", function()
+          partyExpanded[this.questId] = not partyExpanded[this.questId]
+          UpdateFooter()
+        end)
         footer.rows[shown] = row
       end
       row.questId, row.questTitle = quest.id, quest.title
       row:ClearAllPoints(); row:SetPoint("TOPLEFT", footer, "TOPLEFT", 0, -offset)
-      row:SetWidth(300); row:SetHeight(46)
+      row:SetWidth(300)
       row.title:SetText("[Party] " .. quest.title)
-      row.progress:SetText(table.concat(P.CompactLines(quest.id), "\n"))
-      row:Show(); offset = offset + 48
+      row.progress:Hide()
+      row:SetHeight(20)
+      if partyExpanded[quest.id] then
+        local lines = P.CompactLines(quest.id)
+        row.progress:SetText(table.concat(lines, "\n"))
+        row.progress:Show()
+        row:SetHeight(18 + table.getn(lines) * 13)
+      end
+      row:Show(); offset = offset + row:GetHeight() + 2
     end
   end
   footer:SetHeight(offset)
@@ -134,16 +153,24 @@ end
 local function Install()
   if installed or not pfQuest or not pfQuest.tracker then return end
   local tracker = pfQuest.tracker
-  if type(tracker.ButtonEvent) ~= "function" or type(tracker.ButtonEnter) ~= "function" or type(tracker.DoLayout) ~= "function" then
+  if type(tracker.ButtonEvent) ~= "function" or type(tracker.ButtonEnter) ~= "function" or type(tracker.ButtonClick) ~= "function" or type(tracker.DoLayout) ~= "function" then
     if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("pfQuest Party Bots: this pfQuest tracker version is unsupported. Use /pfqb for the comparison.") end
     return
   end
   installed = true
-  local oldEvent, oldEnter, oldLayout = tracker.ButtonEvent, tracker.ButtonEnter, tracker.DoLayout
+  local oldEvent, oldEnter, oldClick, oldLayout = tracker.ButtonEvent, tracker.ButtonEnter, tracker.ButtonClick, tracker.DoLayout
   tracker.ButtonEvent = function(button)
     local target = button or this
     oldEvent(button)
     Append(target)
+  end
+  tracker.ButtonClick = function()
+    local target = this
+    local toggle = tracker.mode == "QUEST_TRACKING" and target and target.title and
+      arg1 ~= "RightButton" and not IsShiftKeyDown() and not IsControlKeyDown()
+    if toggle then expanded[target.title] = not Expanded(target) end
+    oldClick()
+    if toggle then tracker.DoLayout() end
   end
   tracker.ButtonEnter = function()
     oldEnter()
@@ -153,11 +180,18 @@ local function Install()
   end
   tracker.DoLayout = function()
     oldLayout()
-    if tracker.mode == "QUEST_TRACKING" and table.getn(P.roster) > 0 then tracker:SetWidth(math.max(tracker:GetWidth(), 300)) end
+    if tracker.mode == "QUEST_TRACKING" then
+      for _, quest in pairs(tracker.buttons) do
+        for _, line in ipairs(quest.partyBotLines or {}) do
+          if line:IsShown() then tracker:SetWidth(math.max(tracker:GetWidth(), 300)) end
+        end
+      end
+    end
     UpdateFooter()
   end
   for _, button in pairs(tracker.buttons) do
     button:SetScript("OnEvent", tracker.ButtonEvent); button:SetScript("OnEnter", tracker.ButtonEnter)
+    button:SetScript("OnClick", tracker.ButtonClick)
   end
   footer = CreateFrame("Frame", "pfQuestPartyBotsFooter", tracker)
   footer:SetPoint("TOPLEFT", tracker, "BOTTOMLEFT", 0, -3); footer:SetWidth(300); footer:SetHeight(27)

@@ -6,7 +6,12 @@ not replaced. This extension requires the matching Playerbot server changes.
 
 ## Display
 
-- Compact per-bot progress below each tracked quest, two names per line.
+- Click a tracked quest to expand its objectives and compact per-bot progress
+  (two names per line). Click again to hide the bot rows. pfQuest's configured
+  initial expansion setting is respected; partial personal objective progress
+  does not automatically expose bot rows.
+- Bot-only `[Party]` entries also show bot progress only after clicking their title.
+  The `Party quests` button still opens the full comparison.
 - Hover a quest to see each bot's state and collected/required objective counts.
 - `Ready` means the bot's native quest status is complete but unrewarded.
   `Turned in` means the server records a previous reward and the quest is not
@@ -38,7 +43,7 @@ The matching server implementation is maintained separately in
 [pjw345/tortoise-wow PR #61](https://github.com/pjw345/tortoise-wow/pull/61).
 Requires WoW 1.12.1 (Interface 11200), pfQuest, and `PFQBOT` protocol version 1.
 Tracker integration has been checked against pfQuest 8.0.1; pfQuest-turtle is optional.
-Version 1.0.1 also requires the [transport fix in server PR #64](https://github.com/pjw345/tortoise-wow/pull/64).
+Version 1.0.1 and later require the [transport fix in server PR #64](https://github.com/pjw345/tortoise-wow/pull/64).
 The initial server implementation `591c68d4` / deployed stack `2151c15b` does not
 accept these corrected requests. Build and activate the matching server fix
 before testing live quest data; client installation alone removes the invalid
