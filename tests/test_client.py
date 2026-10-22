@@ -323,6 +323,7 @@ class ClientTests(unittest.TestCase):
           local footer=pfQuestPartyBotsFooter
           local row=footer.rows[1]
           assert(row.questId==100 and not row.progress:IsShown())
+          assert(not footer.info:IsShown())
           local collapsed=footer:GetHeight()
           this=row; arg1='LeftButton'; row:GetScript('OnClick')()
           assert(row.progress:IsShown() and footer:GetHeight()>collapsed)
@@ -364,6 +365,7 @@ class ClientTests(unittest.TestCase):
           P.RefreshTracker()
           assert(table.getn(P.OtherTrackerQuests())==21)
           local footer=pfQuestPartyBotsFooter
+          assert(footer.info:IsShown())
           local seen={}
           local function click(button)
             this=button; arg1='LeftButton'; button:GetScript('OnClick')()
@@ -401,6 +403,7 @@ class ClientTests(unittest.TestCase):
           members={'Cria'}; P.BuildRoster(); P.RefreshTracker()
           assert(table.getn(P.ActiveQuests())==3 and table.getn(P.OtherTrackerQuests())==2)
           assert(not footer.later:IsShown())
+          assert(not footer.info:IsShown())
           for i=3,6 do assert(not footer.rows[i]:IsShown()) end
         ''')
 

@@ -13,7 +13,7 @@ not replaced. This extension requires the matching Playerbot server changes.
 - `Other party quests` includes every active journal quest missing from pfQuest's
   visible rows: `[Party]` entries held only by bots and `[You]` entries in your
   journal that pfQuest is not currently displaying. Earlier/Later buttons page
-  through six entries at a time; the count shows how many remain. These entries
+  through six entries at a time; the counter is shown only for multiple pages. These entries
   also show bot progress only after clicking their title. The `Party quests`
   button opens the full comparison.
 - Hover a quest to see each bot's state and collected/required objective counts.

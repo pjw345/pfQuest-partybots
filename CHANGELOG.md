@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5 - 2026-10-22 (preview)
+
+- Hide the redundant party quest counter when all entries fit on one page,
+  including the empty space it occupied. Retain it for multiple pages.
+
 ## 1.0.4 - 2026-10-22 (preview)
 
 - Show localized quest objective instructions above bot progress in party quest

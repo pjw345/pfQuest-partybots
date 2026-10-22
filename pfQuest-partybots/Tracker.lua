@@ -148,7 +148,7 @@ local function UpdateFooter()
   local first = (partyPage - 1) * pageSize + 1
   footer.earlier:Hide(); footer.later:Hide(); footer.info:Hide()
   local shown, offset = 0, 27
-  if count > 0 then
+  if pages > 1 then
     footer.info:SetText("Other party quests: " .. first .. "-" .. math.min(count, first + pageSize - 1) .. " of " .. count)
     footer.info:Show()
     offset = 45
