@@ -10,8 +10,12 @@ not replaced. This extension requires the matching Playerbot server changes.
   (two names per line). Click again to hide the bot rows. pfQuest's configured
   initial expansion setting is respected; partial personal objective progress
   does not automatically expose bot rows.
-- Bot-only `[Party]` entries also show bot progress only after clicking their title.
-  The `Party quests` button still opens the full comparison.
+- `Other party quests` includes every active journal quest missing from pfQuest's
+  visible rows: `[Party]` entries held only by bots and `[You]` entries in your
+  journal that pfQuest is not currently displaying. Earlier/Later buttons page
+  through six entries at a time; the count shows how many remain. These entries
+  also show bot progress only after clicking their title. The `Party quests`
+  button opens the full comparison.
 - Hover a quest to see each bot's state and collected/required objective counts.
 - `Ready` means the bot's native quest status is complete but unrewarded.
   `Turned in` means the server records a previous reward and the quest is not
@@ -31,9 +35,11 @@ not replaced. This extension requires the matching Playerbot server changes.
 
 `Party quests` opens the full comparison from either the tracker or the normal
 Quest Log (normally opened with L). It includes quests held only by bots and
-keeps identically named quests separate by ID. The tracker shows up to four
-party-only quests below its normal entries; the panel includes all current party
-quests. Raid tooltips/panel include the full roster with member paging; compact
+keeps identically named quests separate by ID. Every journal quest is available
+through the tracker and the panel, including quests absent from your own journal. Quests shared by multiple members appear once;
+rewarded history and absent quests do not create active entries. Cached bot
+journals remain marked stale until confirmed, and departed members' journals are
+excluded. Raid tooltips/panel include the full roster with member paging; compact
 tracker lines show the first four other members.
 
 ## Project and compatibility
