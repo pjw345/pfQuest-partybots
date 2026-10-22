@@ -73,6 +73,12 @@ end
 function Tick() for _, f in ipairs(frames) do if f.scripts.OnUpdate then this = f; arg1 = 0.5; f.scripts.OnUpdate() end end end
 members = { 'Mercy', 'Cria', 'Alon', 'Flore' }
 online = {}
+function IsShiftKeyDown() return shiftDown end
+function IsControlKeyDown() return controlDown end
+function HideUIPanel(frame) frame:Hide() end
+function ShowUIPanel(frame) frame:Show() end
+function SelectQuestLogEntry() questLogOpens=(questLogOpens or 0)+1 end
+function ToggleWorldMap() mapOpens=(mapOpens or 0)+1 end
 function GetNumRaidMembers() return 0 end
 function GetNumPartyMembers() return table.getn(members) end
 function UnitName(unit) if unit == 'player' then return 'Alin' end return members[tonumber(string.sub(unit, 6))] end
@@ -96,6 +102,7 @@ function GetItemInfo(entry) return nil end
 function GetQuestLogTitle(index) if index == 1 then return 'Shared | title', 20, nil, false, false, nil end end
 UIParent = CreateFrame('Frame')
 QuestLogFrame = CreateFrame('Frame')
+WorldMapFrame = CreateFrame('Frame'); WorldMapFrame:Hide()
 GameTooltip = CreateFrame('Frame')
 GameTooltip.lines = {}
 function GameTooltip:AddLine(text) table.insert(self.lines, text) end
@@ -108,6 +115,13 @@ pfQuest = { questlog = { [94] = { qlogid = 1, title = 'Shared | title' } } }
 local tracker = CreateFrame('Frame')
 tracker.mode, tracker.buttons = 'QUEST_TRACKING', {}
 function tracker.ButtonEvent(button) button = button or this; button:SetHeight(button.empty and 0 or 20) end
+local expandedStates={}
+function tracker.ButtonClick()
+  if arg1=='RightButton' then SelectQuestLogEntry()
+  elseif IsShiftKeyDown() then hiddenNodes=(hiddenNodes or 0)+1
+  elseif IsControlKeyDown() then ToggleWorldMap()
+  else expandedStates[this.title]=not expandedStates[this.title]; tracker.ButtonEvent(this) end
+end
 function tracker.ButtonEnter() end
 function tracker.DoLayout() tracker:SetWidth(200) end
 local button = CreateFrame('Button'); button.questid = 94; button.title = 'Shared | title'
@@ -124,12 +138,14 @@ class ClientTests(unittest.TestCase):
         if args.pfquest_tracker:
             text = pathlib.Path(args.pfquest_tracker).read_text(encoding='utf-8')
             native = text[text.index('function tracker.ButtonEvent(self)'):text.index('function tracker.RefreshZoneTracker()')]
+            click = text[text.index('function tracker.ButtonClick()'):text.index('local function trackersort(a, b)')]
             self.check('''
               pfQuest.tracker.buttons[1].text=CreateFrame('FontString')
               pfQuest.tracker.buttons[1].icon=CreateFrame('Texture')
-              pfQuest.tracker.buttons[1].node={questid=94}
+              pfQuest.tracker.buttons[1].node={questid=94,qlogid=1}
+              function pfMapDeleteNode() hiddenNodes=(hiddenNodes or 0)+1 end
               pfQuestConfig={path='Interface\\AddOns\\pfQuest'}
-              pfMap={str2rgb=function() return 0.8,0.7,0.2 end,tooltip={GetColor=function() return 0.5,0.5,0.5 end}}
+              pfMap={str2rgb=function() return 0.8,0.7,0.2 end,tooltip={GetColor=function() return 0.5,0.5,0.5 end},DeleteNode=pfMapDeleteNode,UpdateNodes=function() end}
               pfQuest_Loc=setmetatable({}, {__index=function(t,k) return k end})
               function GetNumQuestLeaderBoards() return 1 end
               function GetQuestLogLeaderBoard() return 'Moonlight Silk: 2/10','item',false end
@@ -146,7 +162,7 @@ class ClientTests(unittest.TestCase):
               local expand_states,board_cache={},{}
               local sort,min=table.sort,math.min
               local function trackersort(a,b) return a.questid<b.questid end
-            ''' + native + '\nend\n')
+            ''' + click + native + '\nend\n')
         for name in ('Core.lua', 'Tracker.lua', 'Panel.lua'):
             self.check((ADDON / name).read_text(encoding='utf-8'))
         self.check("FireEvent('PLAYER_LOGIN'); Tick()")
@@ -260,12 +276,54 @@ class ClientTests(unittest.TestCase):
     def test_tracker_no_height_accumulation_and_modes(self):
         self.check(r'''
           local P=pfQuestPartyBots
-          P.RefreshTracker(); local height=pfQuest.tracker.buttons[1]:GetHeight()
-          assert(height>20); P.RefreshTracker(); assert(pfQuest.tracker.buttons[1]:GetHeight()==height)
+          local button=pfQuest.tracker.buttons[1]
+          P.RefreshTracker(); local collapsed=button:GetHeight()
+          assert(not button.partyBotLines[1] or not button.partyBotLines[1]:IsShown())
+          this=button; arg1='LeftButton'; button:GetScript('OnClick')()
+          local height=button:GetHeight()
+          assert(height>collapsed and button.partyBotLines[1]:IsShown())
+          P.RefreshTracker(); assert(button:GetHeight()==height)
+          this=button; arg1='LeftButton'; button:GetScript('OnClick')()
+          assert(button:GetHeight()==collapsed and not button.partyBotLines[1]:IsShown())
+          P.RefreshTracker(); assert(button:GetHeight()==collapsed)
+          this=button; arg1='LeftButton'; button:GetScript('OnClick')()
+          assert(button:GetHeight()==height)
           pfQuest.tracker.mode='GIVER_TRACKING'; P.RefreshTracker()
-          assert(pfQuest.tracker.buttons[1]:GetHeight()==20 and not pfQuest.tracker.buttons[1].partyBotLines[1]:IsShown())
-          pfQuest.tracker.mode='QUEST_TRACKING'; pfQuest.tracker.buttons[1].empty=true; P.RefreshTracker()
-          assert(pfQuest.tracker.buttons[1]:GetHeight()==0)
+          assert(button:GetHeight()==20 and not button.partyBotLines[1]:IsShown())
+          pfQuest.tracker.mode='QUEST_TRACKING'; button.empty=true; P.RefreshTracker()
+          assert(button:GetHeight()==0 and not button.partyBotLines[1]:IsShown())
+        ''')
+
+    def test_tracker_click_shortcuts_preserved(self):
+        self.check(r'''
+          local P=pfQuestPartyBots
+          local button=pfQuest.tracker.buttons[1]
+          local height=button:GetHeight()
+          this=button; arg1='RightButton'; button:GetScript('OnClick')()
+          assert(questLogOpens==1 and button:GetHeight()==height)
+          this=button; arg1='LeftButton'; controlDown=true; button:GetScript('OnClick')(); controlDown=false
+          assert(mapOpens==1 and button:GetHeight()==height)
+          this=button; arg1='LeftButton'; shiftDown=true; button:GetScript('OnClick')(); shiftDown=false
+          assert(hiddenNodes==1 and button:GetHeight()==height)
+          this=button; arg1='LeftButton'; button:GetScript('OnClick')()
+          assert(button.partyBotLines[1]:IsShown())
+        ''')
+
+    def test_bot_only_footer_expands_per_quest_and_retains_state(self):
+        self.check(r'''
+          local P=pfQuestPartyBots
+          P.snapshots.Cria={records={ [100]={id=100,title='Bot only',state='I',level=20,objectives={}} },seen=now}
+          P.RefreshTracker()
+          local footer=pfQuestPartyBotsFooter
+          local row=footer.rows[1]
+          assert(row.questId==100 and not row.progress:IsShown())
+          local collapsed=footer:GetHeight()
+          this=row; arg1='LeftButton'; row:GetScript('OnClick')()
+          assert(row.progress:IsShown() and footer:GetHeight()>collapsed)
+          P.RefreshTracker(); assert(row.progress:IsShown())
+          this=row; arg1='LeftButton'; row:GetScript('OnClick')()
+          assert(not row.progress:IsShown() and footer:GetHeight()==collapsed)
+          P.RefreshTracker(); assert(not row.progress:IsShown())
         ''')
 
     def test_panel_bot_only_duplicate_titles_and_quest_log_button(self):
