@@ -79,7 +79,19 @@ function UnitName(unit) if unit == 'player' then return 'Alin' end return member
 function UnitIsUnit(unit, other) return unit == other end
 function UnitIsConnected(unit) return online[UnitName(unit)] ~= false end
 sent = {}
-function SendAddonMessage(prefix, body, channel) table.insert(sent, {prefix,body,channel}) end
+-- The 1.12 client validates chat escapes even for AddOn sends. This guard
+-- covers our data transport: literal || pairs are valid, bare separators are not.
+function SendAddonMessage(prefix, body, channel)
+  local payload, index = prefix .. "\t" .. body, 1
+  assert(string.len(payload) <= 255, 'AddOn message too long')
+  while true do
+    local first = string.find(payload, '|', index, true)
+    if not first then break end
+    if string.sub(payload, first + 1, first + 1) ~= '|' then error('Invalid escape code in chat message') end
+    index = first + 2
+  end
+  table.insert(sent, {prefix,body,channel})
+end
 function GetItemInfo(entry) return nil end
 function GetQuestLogTitle(index) if index == 1 then return 'Shared | title', 20, nil, false, false, nil end end
 UIParent = CreateFrame('Frame')
@@ -150,6 +162,35 @@ class ClientTests(unittest.TestCase):
     def check(self, script):
         self.scripts.append(script)
         self.lua.execute(script)
+
+    def test_requests_are_vanilla_chat_safe_and_bounded(self):
+        self.check(r'''
+          local P=pfQuestPartyBots
+          assert(not pcall(SendAddonMessage, 'PFQBOT', 'Q|1|42|Mercy|0|94', 'PARTY'))
+          assert(pcall(SendAddonMessage, 'PFQBOT', 'literal||pipe', 'PARTY'))
+          P.Request({name='Mercy'}, now)
+          local message=sent[table.getn(sent)]
+          assert(message[1]=='PFQBOT' and message[3]=='PARTY')
+          local fields=P.Split(message[2], ':')
+          assert(table.getn(fields)==6 and fields[1]=='Q' and fields[2]=='1')
+          assert(fields[3]==P.pending.Mercy.token and fields[4]=='Mercy' and fields[5]=='0' and fields[6]=='94')
+          assert(not string.find(message[2], '|', 1, true))
+          pfQuest.questlog={}
+          for id=1,30 do pfQuest.questlog[id]={qlogid=id} end
+          P.Request({name='Mercy'},now+20)
+          fields=P.Split(sent[table.getn(sent)][2], ':')
+          assert(table.getn(P.Split(fields[6], ','))==25)
+          pfQuest.questlog={}
+          for id=4294967200,4294967229 do pfQuest.questlog[id]={qlogid=1} end
+          local name=string.rep('x',48)
+          P.snapshots[name]={hash='0123456789abcdef'}
+          GetNumRaidMembers=function() return 1 end
+          P.Request({name=name},now+40)
+          message=sent[table.getn(sent)]; fields=P.Split(message[2], ':')
+          assert(message[3]=='RAID' and string.len(message[2])<=240)
+          assert(fields[4]==name and fields[5]=='0123456789abcdef')
+          assert(table.getn(P.Split(fields[6], ','))<=25 and string.len(fields[6])>0)
+        ''')
 
     def test_native_wire_and_progress(self):
         if not args.wire:
