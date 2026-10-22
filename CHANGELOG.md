@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.3 - 2026-10-22 (preview)
+
+- Include every party journal quest missing from pfQuest's visible tracker rows,
+  including bot-only quests and personal quests filtered by the native tracker.
+- Replace the four-quest cutoff with six-row pages and a visible total.
+- Keep click-expanded progress per quest across paging and snapshot refreshes.
+- Include the extra rows in tracker bounds without accumulating height.
+- Preserve distinct quest IDs and fix overlapping final comparison pages.
+- Client-only UI change; no server rebuild required.
+
 ## 1.0.2 - 2026-10-22 (preview)
 
 - Show compact bot rows inside each clicked/expanded quest instead of permanently.
