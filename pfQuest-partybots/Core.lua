@@ -113,7 +113,9 @@ function P.Request(member, now)
   token = math.mod(token, 4294967294) + 1
   local snapshot = P.snapshots[member.name]
   local hash = snapshot and snapshot.hash or "0"
-  local header = "Q|1|" .. token .. "|" .. member.name .. "|" .. hash .. "|"
+  -- Vanilla validates chat escapes in SendAddonMessage. Keep requests pipe-free;
+  -- the matching server accepts colon-delimited version-1 requests.
+  local header = "Q:1:" .. token .. ":" .. member.name .. ":" .. hash .. ":"
   local query = ""
   local count = 0
   for _, id in ipairs(P.PlayerQuestIds()) do

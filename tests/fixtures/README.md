@@ -9,3 +9,7 @@ repository's standalone `tests/playerbot-quest-sync` build. Pass that new file
 to `python tests/test_client.py --wire path/to/native-wire.hex` to validate
 current server output. The checked-in fixture keeps the client suite runnable
 without a server checkout; it does not prove compatibility with future changes.
+
+The colon-request transport regression also regenerates these reply bytes using
+the corrected server parser. Replies remain byte-identical; client sends are
+now separately checked against the Vanilla pipe-escape rule.

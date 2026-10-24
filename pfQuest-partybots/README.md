@@ -38,8 +38,11 @@ The matching server implementation is maintained separately in
 [pjw345/tortoise-wow PR #61](https://github.com/pjw345/tortoise-wow/pull/61).
 Requires WoW 1.12.1 (Interface 11200), pfQuest, and `PFQBOT` protocol version 1.
 Tracker integration has been checked against pfQuest 8.0.1; pfQuest-turtle is optional.
-The initial server implementation is commit `591c68d4`; deployed stack `2151c15b`
-includes it. An unmodified server does not supply bot snapshots.
+Version 1.0.1 also requires the [transport fix in server PR #64](https://github.com/pjw345/tortoise-wow/pull/64).
+The initial server implementation `591c68d4` / deployed stack `2151c15b` does not
+accept these corrected requests. Build and activate the matching server fix
+before testing live quest data; client installation alone removes the invalid
+escape error but does not enable snapshots on that older build. An unmodified server does not supply bot snapshots.
 
 ## Installation and use
 
@@ -83,8 +86,12 @@ version/hash/chunk metadata. It replaces a snapshot only after a complete valid
 reply. Titles are hex-encoded data. No payload is executed and no human whispers
 are parsed, filtered or hidden.
 
-Protocol 1 request: `Q|1|token|bot|previousHashOr0|questIds` (at most 240 bytes,
-25 queried IDs). A snapshot contains at most 50 quest rows: actual quest slots
+Protocol 1 request: `Q:1:token:bot:previousHashOr0:questIds` (at most 240 bytes,
+25 queried IDs). Requests use colons because the 1.12 client validates pipe chat
+escapes before transmission. New servers retain legacy pipe-request parsing for
+compatibility with existing non-client producers. Server-to-client snapshots are
+unchanged and remain pipe-delimited; they do not pass through client send validation.
+A snapshot contains at most 50 quest rows: actual quest slots
 plus the requested current-player history IDs. Each row is
 `questId|state|level|hexTitle|objectives`, followed by a newline. States are
 `I` in progress, `C` ready, `F` failed, `R` rewarded history, `N` absent.
@@ -109,8 +116,8 @@ tracker, checking repeated rendering, modes, bot-only rows, IDs, response
 assembly, stale/empty/offline states, and objective tooltips. These are not
 live client graphics or server-startup validation.
 
-The matching native server image has compiled and passed startup/connectivity
-checks. Live AddOn delivery, graphics and quest-progress acceptance remain pending.
+The initial native server image compiled and passed startup/connectivity checks.
+The 1.0.1 request-parser fix still requires a full server build and activation. Live AddOn delivery, graphics and quest-progress acceptance remain pending.
 Before acceptance, install the extension after exiting the client, then check an item objective, a kill/cast
 objective, a bot-only quest, ready and rewarded states, roster changes, a missing
 reply, and the ordinary pfQuest/Quest Log/helper controls in game. This feature
