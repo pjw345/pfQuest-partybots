@@ -38,10 +38,6 @@ function P.AddTooltip(id)
         GameTooltip:AddLine("  " .. P.ObjectiveLabel(objective) .. ": " .. objective.current .. "/" .. objective.required, 0.8, 0.8, 0.8)
       end
     end
-    local snapshot = P.snapshots[member.name]
-    if snapshot and snapshot.received then
-      GameTooltip:AddLine("  Updated " .. date("%H:%M:%S", snapshot.received), 0.55, 0.55, 0.55)
-    end
   end
   GameTooltip:AddLine("Not in log does not establish a turn-in. * marks stale data.", 0.7, 0.7, 0.7, true)
   GameTooltip:Show()
