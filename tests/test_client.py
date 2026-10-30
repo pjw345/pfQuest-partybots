@@ -323,6 +323,7 @@ class ClientTests(unittest.TestCase):
           local footer=pfQuestPartyBotsFooter
           local row=footer.rows[1]
           assert(row.questId==100 and not row.progress:IsShown())
+          assert(not footer.info:IsShown())
           local collapsed=footer:GetHeight()
           this=row; arg1='LeftButton'; row:GetScript('OnClick')()
           assert(row.progress:IsShown() and footer:GetHeight()>collapsed)
@@ -364,6 +365,7 @@ class ClientTests(unittest.TestCase):
           P.RefreshTracker()
           assert(table.getn(P.OtherTrackerQuests())==21)
           local footer=pfQuestPartyBotsFooter
+          assert(footer.info:IsShown())
           local seen={}
           local function click(button)
             this=button; arg1='LeftButton'; button:GetScript('OnClick')()
@@ -401,6 +403,7 @@ class ClientTests(unittest.TestCase):
           members={'Cria'}; P.BuildRoster(); P.RefreshTracker()
           assert(table.getn(P.ActiveQuests())==3 and table.getn(P.OtherTrackerQuests())==2)
           assert(not footer.later:IsShown())
+          assert(not footer.info:IsShown())
           for i=3,6 do assert(not footer.rows[i]:IsShown()) end
         ''')
 
@@ -449,6 +452,56 @@ class ClientTests(unittest.TestCase):
           local label=P.Status('Mercy',94); assert(label=='Ready')
           P.AddTooltip(94); assert(string.find(table.concat(GameTooltip.lines,'\n'),'Moonlight Silk: 10/10',1,true))
           P.snapshots.Mercy.records[94].state='R'; assert(P.Status('Mercy',94)=='Turned in')
+        ''')
+
+    def test_party_quest_popup_instructions_and_per_bot_counts(self):
+        self.check(r'''
+          local P=pfQuestPartyBots
+          pfDB.quests={loc={
+            [248]={O='Climb the watch tower.$BFind a container for the Glyph of Azora.'},
+            [1921]={O='Bring 10 Linen and 6 Charged Rift Gems to Wynne Larson.'}
+          }}
+          pfDB.items.loc[2589]='Linen Cloth'
+          P.snapshots.Cria={seen=now,records={
+            [248]={id=248,title='Looking Further',state='C',level=22,objectives={}}
+          }}
+          P.snapshots.Flore={seen=now,records={
+            [1921]={id=1921,title='Gathering Materials',state='I',level=15,
+              objectives={{kind='I',entry=2589,current=3,required=10}}}
+          }}
+          P.RefreshTracker()
+          local looking,materials
+          for _,row in ipairs(pfQuestPartyBotsFooter.rows) do
+            if row.questId==248 then looking=row end
+            if row.questId==1921 then materials=row end
+          end
+          this=looking; GameTooltip.lines={}; looking:GetScript('OnEnter')()
+          local text=table.concat(GameTooltip.lines,'\n')
+          assert(string.find(text,'Find a container for the Glyph of Azora.',1,true))
+          assert(not string.find(text,'$B',1,true))
+          assert(string.find(text,'Cria: Ready',1,true))
+          assert(GameTooltip.text=='Looking Further (248)')
+          pfDatabase={FormatQuestText=function(self,text)
+            formatted=(formatted or 0)+1; return 'Formatted: '..text
+          end}
+          this=materials; GameTooltip.lines={}; materials:GetScript('OnEnter')()
+          text=table.concat(GameTooltip.lines,'\n')
+          assert(formatted==1 and string.find(text,'Formatted: Bring 10 Linen',1,true))
+          assert(string.find(text,'Linen Cloth: 3/10',1,true))
+          -- The comparison uses the same popup, including for quests not in our log.
+          P.TogglePanel()
+          for _,row in ipairs(pfQuestPartyBotsPanel.rows) do
+            if row:IsShown() and row.questId==1921 then
+              this=row; GameTooltip.lines={}; row:GetScript('OnEnter')()
+              assert(string.find(table.concat(GameTooltip.lines,'\n'),'Linen Cloth: 3/10',1,true))
+              assert(formatted==2)
+            end
+          end
+          pfDB.quests.loc[248]=nil
+          this=looking; GameTooltip.lines={}; looking:GetScript('OnEnter')()
+          text=table.concat(GameTooltip.lines,'\n')
+          assert(string.find(text,'Quest instructions unavailable in pfQuest.',1,true))
+          assert(string.find(text,'Cria: Ready',1,true))
         ''')
 
 

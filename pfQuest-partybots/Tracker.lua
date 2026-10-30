@@ -47,6 +47,26 @@ function P.AddTooltip(id)
   GameTooltip:Show()
 end
 
+function P.ShowQuestTooltip(row)
+  GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+  GameTooltip:SetText(row.questTitle .. " (" .. row.questId .. ")")
+  -- Bot-only quests have no native quest-log entry to provide this text.
+  -- Reuse pfQuest's localized instructions for the exact quest ID/stage.
+  local quest = pfDB and pfDB.quests and pfDB.quests.loc and pfDB.quests.loc[row.questId]
+  local text = quest and quest.O
+  if type(text) == "string" and text ~= "" then
+    if pfDatabase and type(pfDatabase.FormatQuestText) == "function" then
+      text = pfDatabase:FormatQuestText(text)
+    else
+      text = string.gsub(text, "%$[Bb]", "\n")
+    end
+    GameTooltip:AddLine(text, 1, 1, 0.9, true)
+  else
+    GameTooltip:AddLine("Quest instructions unavailable in pfQuest.", 0.7, 0.7, 0.7, true)
+  end
+  P.AddTooltip(row.questId)
+end
+
 local function Short(name, id)
   local label, record, stale = P.Status(name, id)
   local color = stale and "|cffaaaaaa" or (record and record.state == "C" and "|cff66ff66" or
@@ -128,7 +148,7 @@ local function UpdateFooter()
   local first = (partyPage - 1) * pageSize + 1
   footer.earlier:Hide(); footer.later:Hide(); footer.info:Hide()
   local shown, offset = 0, 27
-  if count > 0 then
+  if pages > 1 then
     footer.info:SetText("Other party quests: " .. first .. "-" .. math.min(count, first + pageSize - 1) .. " of " .. count)
     footer.info:Show()
     offset = 45
@@ -149,9 +169,7 @@ local function UpdateFooter()
       row.progress:SetFont(Font(), 10); row.progress:SetJustifyH("LEFT")
       row.progress:SetPoint("TOPLEFT", row, "TOPLEFT", 10, -16)
       row.progress:SetPoint("TOPRIGHT", row, "TOPRIGHT", -2, -16)
-      row:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(this, "ANCHOR_RIGHT"); GameTooltip:SetText(this.questTitle); P.AddTooltip(this.questId)
-      end)
+      row:SetScript("OnEnter", function() P.ShowQuestTooltip(this) end)
       row:SetScript("OnLeave", function() GameTooltip:Hide() end)
       row:SetScript("OnClick", function()
         partyExpanded[this.questId] = not partyExpanded[this.questId]
