@@ -18,7 +18,7 @@ a separate acceptance check.
 
 ## Install
 
-Download `pfQuest-partybots-1.0.2.zip` from
+Download `pfQuest-partybots-1.0.3.zip` from
 [Releases](https://github.com/pjw345/pfQuest-partybots/releases), exit the game,
 and extract the contained `pfQuest-partybots` folder into `Interface/AddOns`,
 beside `pfQuest`. Restart the client and enable both AddOns. The folder containing
@@ -28,7 +28,10 @@ For a source checkout, copy only the repository's `pfQuest-partybots` subfolder
 into `Interface/AddOns`; the GitHub source archive is not the packaged AddOn.
 
 Click a quest title to expand its personal objectives and bot progress; click
-again to hide the bot rows. Bot-only `[Party]` titles also expand on click.
+again to hide the bot rows. `[Party]` titles show quests held only by bots;
+`[You]` titles add your journal quests missing from pfQuest's visible rows.
+These entries appear under `Other party quests`, with Earlier/Later buttons
+to reach every quest in six-row pages. Their progress also expands on click.
 pfQuest's default expansion setting and ordinary click shortcuts are preserved.
 
 Use `/pfqb` to toggle the comparison and `/pfqb refresh` to request an update.
@@ -72,7 +75,7 @@ CI runs the fixture suite on Lua 5.1 and does not claim live graphics or Lua 5.0
 python scripts/package.py
 ```
 
-This creates `dist/pfQuest-partybots-1.0.2.zip` with the correct install folder.
+This creates `dist/pfQuest-partybots-1.0.3.zip` with the correct install folder.
 
 ## License
 

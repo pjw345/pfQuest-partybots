@@ -123,7 +123,13 @@ function tracker.ButtonClick()
   else expandedStates[this.title]=not expandedStates[this.title]; tracker.ButtonEvent(this) end
 end
 function tracker.ButtonEnter() end
-function tracker.DoLayout() tracker:SetWidth(200) end
+function tracker.DoLayout()
+  local height=16
+  for _,button in pairs(tracker.buttons) do
+    if not button.empty then height=height+button:GetHeight() end
+  end
+  tracker:SetHeight(height); tracker:SetWidth(200)
+end
 local button = CreateFrame('Button'); button.questid = 94; button.title = 'Shared | title'
 tracker.buttons[1] = button
 pfQuest.tracker = tracker
@@ -334,6 +340,106 @@ class ClientTests(unittest.TestCase):
           P.TogglePanel(); assert(pfQuestPartyBotsPanel:IsShown())
           assert(pfQuestPartyBotsQuestLogButton and pfQuestPartyBotsTrackerButton)
           P.TogglePanel(); assert(not pfQuestPartyBotsPanel:IsShown()); P.TogglePanel(); assert(table.getn(P.ActiveQuests())==3)
+        ''')
+
+    def test_complete_journal_union_and_tracker_paging(self):
+        self.check(r'''
+          local P=pfQuestPartyBots
+          local oldTitle=GetQuestLogTitle
+          GetQuestLogTitle=function(index)
+            if index==2 then return 'Personal untracked',21,nil,false,false,nil end
+            return oldTitle(index)
+          end
+          if pfQuestCompat then pfQuestCompat.GetQuestLogTitle=GetQuestLogTitle end
+          pfQuest.questlog[95]={qlogid=2,title='Personal untracked'}
+          local records={}
+          for id=100,119 do
+            records[id]={id=id,title='Other '..id,state=id==100 and 'C' or id==101 and 'F' or 'I',level=20,objectives={}}
+          end
+          records[120]={id=120,title='Historical',state='R',level=20,objectives={}}
+          records[121]={id=121,title='Absent',state='N',level=20,objectives={}}
+          P.snapshots.Mercy={records=records,seen=now}
+          P.snapshots.Cria={records={ [100]=records[100] },seen=now}
+          assert(table.getn(P.ActiveQuests())==22)
+          P.RefreshTracker()
+          assert(table.getn(P.OtherTrackerQuests())==21)
+          local footer=pfQuestPartyBotsFooter
+          local seen={}
+          local function click(button)
+            this=button; arg1='LeftButton'; button:GetScript('OnClick')()
+          end
+          local base=pfQuest.tracker:GetHeight()
+          P.RefreshTracker(); assert(pfQuest.tracker:GetHeight()==base)
+          for page=1,4 do
+            local rows=0
+            for _,row in ipairs(footer.rows) do
+              if row:IsShown() then
+                rows=rows+1
+                assert(not seen[row.questId] and row.questId~=94)
+                assert(row.questId~=120 and row.questId~=121)
+                seen[row.questId]=true
+                assert(not row.progress:IsShown())
+              end
+            end
+            assert(rows==(page==4 and 3 or 6))
+            if page<4 then assert(footer.later:IsShown()); click(footer.later) end
+          end
+          assert(not footer.later:IsShown() and seen[95] and seen[119])
+          for id=100,119 do assert(seen[id]) end
+          for page=4,2,-1 do assert(footer.earlier:IsShown()); click(footer.earlier) end
+          assert(not footer.earlier:IsShown())
+          local row=footer.rows[1]
+          local id=row.questId
+          local collapsed=pfQuest.tracker:GetHeight()
+          click(row); assert(row.progress:IsShown() and pfQuest.tracker:GetHeight()>collapsed)
+          local expandedHeight=pfQuest.tracker:GetHeight()
+          P.RefreshTracker(); assert(pfQuest.tracker:GetHeight()==expandedHeight)
+          click(footer.later); assert(not footer.rows[1].progress:IsShown())
+          click(footer.earlier); assert(footer.rows[1].questId==id and footer.rows[1].progress:IsShown())
+          click(footer.rows[1]); assert(pfQuest.tracker:GetHeight()==collapsed)
+          -- Current roster only; cache entries for departed members add no quests.
+          members={'Cria'}; P.BuildRoster(); P.RefreshTracker()
+          assert(table.getn(P.ActiveQuests())==3 and table.getn(P.OtherTrackerQuests())==2)
+          assert(not footer.later:IsShown())
+          for i=3,6 do assert(not footer.rows[i]:IsShown()) end
+        ''')
+
+    def test_bot_journals_without_personal_quests_and_panel_last_page(self):
+        self.check(r'''
+          local P=pfQuestPartyBots
+          pfQuest.questlog={}
+          pfQuest.tracker.buttons[1].empty=true
+          local records={}
+          for id=100,112 do
+            records[id]={id=id,title='Bot quest '..id,state='I',level=20,objectives={}}
+          end
+          P.snapshots.Cria={records=records,seen=now}
+          P.RefreshTracker()
+          local footer=pfQuestPartyBotsFooter
+          assert(footer:IsShown() and footer.rows[1]:IsShown())
+          assert(table.getn(P.OtherTrackerQuests())==13)
+          P.TogglePanel()
+          local panel=pfQuestPartyBotsPanel
+          local seen={}
+          for _,row in ipairs(panel.rows) do
+            assert(row:IsShown() and not seen[row.questId]); seen[row.questId]=true
+            assert(row.cells[1]:GetText()=='Not in log')
+          end
+          local later
+          for _,frame in ipairs(frames) do if frame.text=='Later quests' then later=frame end end
+          this=later; later:GetScript('OnClick')()
+          assert(panel.rows[1]:IsShown() and not seen[panel.rows[1].questId])
+          for i=2,12 do assert(not panel.rows[i]:IsShown()) end
+          -- Clamp the tracker page when completed/abandoned quests disappear.
+          this=footer.later; footer.later:GetScript('OnClick')()
+          this=footer.later; footer.later:GetScript('OnClick')()
+          P.snapshots.Cria.records={ [100]=records[100] }; P.Notify()
+          assert(footer.rows[1].questId==100 and not footer.later:IsShown() and not footer.earlier:IsShown())
+          for i=2,6 do assert(not footer.rows[i]:IsShown()) end
+          pfQuest.tracker.mode='GIVER_TRACKING'; P.RefreshTracker()
+          assert(not footer:IsShown())
+          pfQuest.tracker.mode='QUEST_TRACKING'; P.RefreshTracker()
+          assert(footer:IsShown() and footer.rows[1].questId==100)
         ''')
 
     def test_tooltip_counts_and_turn_in_states(self):

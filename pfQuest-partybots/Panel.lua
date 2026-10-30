@@ -38,8 +38,8 @@ end
 function P.RefreshPanel()
   if not panel or not panel:IsShown() then return end
   local quests = P.ActiveQuests()
-  firstRow = math.max(1, math.min(firstRow, math.max(1, table.getn(quests) - 11)))
-  firstMember = math.max(1, math.min(firstMember, math.max(1, table.getn(P.roster) - 3)))
+  firstRow = math.max(1, math.min(firstRow, math.max(1, math.floor((table.getn(quests) - 1) / 12) * 12 + 1)))
+  firstMember = math.max(1, math.min(firstMember, math.max(1, math.floor((table.getn(P.roster) - 1) / 4) * 4 + 1)))
   local names = { UnitName("player") .. " (you)" }
   for i = firstMember, firstMember + 3 do table.insert(names, P.roster[i] and P.roster[i].name or "") end
   for i = 1, 5 do panel.headers[i]:SetText(names[i]) end
