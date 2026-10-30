@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.6 - 2026-10-25 (preview)
+
+- Remove the per-bot `Updated HH:MM:SS` line from quest hover popups.
+- Preserve snapshot timestamps and stale-data detection internally.
+
 ## 1.0.5 - 2026-10-22 (preview)
 
 - Hide the redundant party quest counter when all entries fit on one page,

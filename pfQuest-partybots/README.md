@@ -33,7 +33,7 @@ not replaced. This extension requires the matching Playerbot server changes.
   aggregate those quantitative objectives; native `Ready` remains authoritative
   for requirements such as reputation that are not quantified in this view.
 - Pending, offline, unavailable and stale data remain distinct. `*` marks stale
-  or unavailable data. The tooltip shows the last response time and any error.
+  or unavailable data. The tooltip shows any error without per-bot timestamps.
   The last complete snapshot survives partial replies, timeouts and reloads;
   reloaded data is stale until the server confirms it.
 
